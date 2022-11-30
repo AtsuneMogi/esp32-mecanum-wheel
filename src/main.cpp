@@ -227,30 +227,54 @@ void loop() {
     Serial.println("Unko!!!!!!"); delay(2000);
     /*int packetSize = Udp.parsePacket();
     
-    switch (buf[0]) {  
-        case 'A':
+    switch (buf[0]) {
+        case 'a':
             forward(SPEED);
             break;
+        case 'A':
+            forward(2*SPEED);
+            break;
+        case 'b':
+            back(speed);
+            break
         case 'B':
-            back(SPEED);
+            back(2*SPEED);
+            break;
+        case 'c':
+            left_shift(0, 200, 0, 200);
             break;
         case 'C':
-            left_shift(0,200,0,200);
+            left_shift(0, 400, 0, 400);
+            break;
+        case 'd':
+            right_shift(200, 0, 200, 0);
             break;
         case 'D':
-            right_shift(200,0,200,0);
+            right_shift(400, 0, 400, 0);
+            break;
+        case 'e':
+            left_shift(200, 0, 200, 0);
             break;
         case 'E':
-            left_shift(200,0,200,0);
+            left_shift(400, 0, 400, 0);
+            break;
+        case 'f':
+            right_shift(0, 200, 0, 200);
             break;
         case 'F':
-            right_shift(0,200,0, 200);
+            right_shift(0, 400, 0, 400);
+            break;
+        case 'g':
+            left_shift(200, 200, 200, 200);
             break;
         case 'G':
-            left_shift(200,200,200,200);
+            left_shift(400, 400, 400, 400);
+            break;
+        case 'h':
+            right_shift(200, 200, 200, 200);
             break;
         case 'H':
-            right_shift(200,200,200,200);
+            right_shift(400, 400, 400, 400);
             break;
         case 'I':
             right_turn(TURN_SPEED);
