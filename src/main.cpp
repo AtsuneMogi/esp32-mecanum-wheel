@@ -1,202 +1,147 @@
 #include <Arduino.h>
 #include <AsyncUDP.h>
 #include <stdlib.h>
+#include <vector>
 #include <WiFi.h>
 
-#define SPEED 150
-#define TURN_SPEED 100
+#define FRONT_RIGHT_MOTOR 0
+#define FRONT_LEFT_MOTOR 1
+#define BACK_RIGHT_MOTOR 2
+#define BACK_LEFT_MOTOR 3
 
-#define speedPinR 9 // Front Wheel PWM pin connect Model-Y M_B ENA 
-#define RightMotorDirPin1 22 // Front Right Motor direction pin 1 to Model-Y M_B IN1 (K1)
-#define RightMotorDirPin2 24 // Front Right Motor direction pin 2 to Model-Y M_B IN2 (K1)                                 
-#define LeftMotorDirPin1 26 // Front Left Motor direction pin 1 to Model-Y M_B IN3 (K3)
-#define LeftMotorDirPin2 28 // Front Left Motor direction pin 2 to Model-Y M_B IN4 (K3)
-#define speedPinL 10 // Front Wheel PWM pin connect Model-Y M_B ENB
+#define FORWARD 1
+#define BACKWARD -1
+#define STOP 0
 
-#define speedPinRB 11 // Rear Wheel PWM pin connect Left Model-Y M_A ENA 
-#define RightMotorDirPin1B 5 // Rear Right Motor direction pin 1 to Model-Y M_A IN1 (K1)
-#define RightMotorDirPin2B 6 // Rear Right Motor direction pin 2 to Model-Y M_A IN2 (K1) 
-#define LeftMotorDirPin1B 7 // Rear Left Motor direction pin 1 to Model-Y M_A IN3 (K3)
-#define LeftMotorDirPin2B 8 // Rear Left Motor direction pin 2 to Model-Y M_A IN4 (K3)
-#define speedPinLB 12 // Rear Wheel PWM pin connect Model-Y M_A ENB
-
-char ssid[] = "M5StickC-Plus-Controller";
-char pass[] = "controller"; 
+struct MOTOR_PINS {
+    int pinIN1;
+    int pinIN2;    
+};
+std::vector<MOTOR_PINS> motorPins = {
+    {26, 25}, // Front Right Motor direction pin 1, 2 to Model-Y M_B IN1, IN2
+    {17, 16}, // Front Left Motor direction pin 1, 2 to Model-Y M_B IN3, IN4
+    {27, 14}, // Rear Right Motor direction pin 1, 2 to Model-Y M_A IN1, IN2
+    {12, 13}, // Rear Left Motor direction pin 1, 2 to Model-Y M_A IN3, IN4 
+};
 // use a ring buffer to increase speed and reduce memory allocation
-char buf[1]; 
+char buf[1];
+char ssid[] = "M5StickC-Plus-Controller";
+char pass[] = "controller";
 AsyncUDP udp;
 unsigned int port = 8888;  // local port to listen on
 
-// front-right wheel forward turn
-void FR_bck(int speed) {
-    digitalWrite(RightMotorDirPin1, LOW);
-    digitalWrite(RightMotorDirPin2,HIGH); 
-    analogWrite(speedPinR,speed);
+
+void rotateMotor(int motorNumber, int motorDirection) {
+    if (motorDirection == FORWARD) {
+        digitalWrite(motorPins[motorNumber].pinIN1, HIGH);
+        digitalWrite(motorPins[motorNumber].pinIN2, LOW);    
+    } else if (motorDirection == BACKWARD) {
+        digitalWrite(motorPins[motorNumber].pinIN1, LOW);
+        digitalWrite(motorPins[motorNumber].pinIN2, HIGH);     
+    } else {
+        digitalWrite(motorPins[motorNumber].pinIN1, LOW);
+        digitalWrite(motorPins[motorNumber].pinIN2, LOW);       
+    }
 }
 
-// front-right wheel backward turn
-void FR_fwd(int speed) {
-    digitalWrite(RightMotorDirPin1,HIGH);
-    digitalWrite(RightMotorDirPin2,LOW); 
-    analogWrite(speedPinR,speed);
+
+void forward() {
+    rotateMotor(FRONT_RIGHT_MOTOR, FORWARD);
+    rotateMotor(BACK_RIGHT_MOTOR, FORWARD);
+    rotateMotor(FRONT_LEFT_MOTOR, FORWARD);
+    rotateMotor(BACK_LEFT_MOTOR, FORWARD);  
 }
 
-// front-left wheel forward turn
-void FL_bck(int speed) {
-    digitalWrite(LeftMotorDirPin1,LOW);
-    digitalWrite(LeftMotorDirPin2,HIGH);
-    analogWrite(speedPinL,speed);
+
+void back() {
+    rotateMotor(FRONT_RIGHT_MOTOR, BACKWARD);
+    rotateMotor(BACK_RIGHT_MOTOR, BACKWARD);
+    rotateMotor(FRONT_LEFT_MOTOR, BACKWARD);
+    rotateMotor(BACK_LEFT_MOTOR, BACKWARD);
 }
 
-// front-left wheel backward turn
-void FL_fwd(int speed) {
-    digitalWrite(LeftMotorDirPin1,HIGH);
-    digitalWrite(LeftMotorDirPin2,LOW);
-    analogWrite(speedPinL,speed);
+
+void right() {
+    rotateMotor(FRONT_RIGHT_MOTOR, BACKWARD);
+    rotateMotor(BACK_RIGHT_MOTOR, FORWARD);
+    rotateMotor(FRONT_LEFT_MOTOR, FORWARD);
+    rotateMotor(BACK_LEFT_MOTOR, BACKWARD);
 }
 
-// rear-right wheel forward turn
-void RR_bck(int speed) {
-    digitalWrite(RightMotorDirPin1B, LOW);
-    digitalWrite(RightMotorDirPin2B,HIGH); 
-    analogWrite(speedPinRB,speed);
+
+void left() {
+    rotateMotor(FRONT_RIGHT_MOTOR, FORWARD);
+    rotateMotor(BACK_RIGHT_MOTOR, BACKWARD);
+    rotateMotor(FRONT_LEFT_MOTOR, BACKWARD);
+    rotateMotor(BACK_LEFT_MOTOR, FORWARD);
 }
 
-// rear-right wheel backward turn
-void RR_fwd(int speed) {
-    digitalWrite(RightMotorDirPin1B, HIGH);
-    digitalWrite(RightMotorDirPin2B,LOW); 
-    analogWrite(speedPinRB,speed);
+
+void right_forward() {
+    rotateMotor(FRONT_RIGHT_MOTOR, STOP);
+    rotateMotor(BACK_RIGHT_MOTOR, FORWARD);
+    rotateMotor(FRONT_LEFT_MOTOR, FORWARD);
+    rotateMotor(BACK_LEFT_MOTOR, STOP);
 }
 
-// rear-left wheel forward turn
-void RL_bck(int speed) {
-    digitalWrite(LeftMotorDirPin1B,LOW);
-    digitalWrite(LeftMotorDirPin2B,HIGH);
-    analogWrite(speedPinLB,speed);
+
+void left_forward() {
+    rotateMotor(FRONT_RIGHT_MOTOR, FORWARD);
+    rotateMotor(BACK_RIGHT_MOTOR, STOP);
+    rotateMotor(FRONT_LEFT_MOTOR, STOP);
+    rotateMotor(BACK_LEFT_MOTOR, FORWARD);
 }
 
-// rear-left wheel backward turn
-void RL_fwd(int speed) {
-    digitalWrite(LeftMotorDirPin1B,HIGH);
-    digitalWrite(LeftMotorDirPin2B,LOW);
-    analogWrite(speedPinLB,speed);
+
+void right_back() {
+    rotateMotor(FRONT_RIGHT_MOTOR, BACKWARD);
+    rotateMotor(BACK_RIGHT_MOTOR, STOP);
+    rotateMotor(FRONT_LEFT_MOTOR, STOP);
+    rotateMotor(BACK_LEFT_MOTOR, BACKWARD);
 }
- 
-// Stop
+
+
+void left_back() {
+    rotateMotor(FRONT_RIGHT_MOTOR, STOP);
+    rotateMotor(BACK_RIGHT_MOTOR, BACKWARD);
+    rotateMotor(FRONT_LEFT_MOTOR, BACKWARD);
+    rotateMotor(BACK_LEFT_MOTOR, STOP);
+}
+
+
+void right_turn() {
+    rotateMotor(FRONT_RIGHT_MOTOR, BACKWARD);
+    rotateMotor(BACK_RIGHT_MOTOR, BACKWARD);
+    rotateMotor(FRONT_LEFT_MOTOR, FORWARD);
+    rotateMotor(BACK_LEFT_MOTOR, FORWARD);  
+}
+
+
+void left_turn() {
+    rotateMotor(FRONT_RIGHT_MOTOR, FORWARD);
+    rotateMotor(BACK_RIGHT_MOTOR, FORWARD);
+    rotateMotor(FRONT_LEFT_MOTOR, BACKWARD);
+    rotateMotor(BACK_LEFT_MOTOR, BACKWARD);
+}
+
+
 void stop() {
-    analogWrite(speedPinLB,0);
-    analogWrite(speedPinRB,0);
-    analogWrite(speedPinL,0);
-    analogWrite(speedPinR,0);
-}
-
-/* motor control */
-void right_shift(
-    int speed_fl_fwd,
-    int speed_rl_bck,
-    int speed_rr_fwd,
-    int speed_fr_bck
-) {
-    FL_fwd(speed_fl_fwd); 
-    RL_bck(speed_rl_bck); 
-    FR_bck(speed_fr_bck);
-    RR_fwd(speed_rr_fwd);
-}
-
-
-void left_shift(
-    int speed_fl_bck,
-    int speed_rl_fwd,
-    int speed_rr_bck,
-    int speed_fr_fwd
-) {
-    FL_bck(speed_fl_bck);
-    RL_fwd(speed_rl_fwd);
-    FR_fwd(speed_fr_fwd);
-    RR_bck(speed_rr_bck); 
-}
-
-
-void forward(int speed) {
-    RL_fwd(speed);
-    RR_fwd(speed);
-    FR_fwd(speed);
-    FL_fwd(speed); 
-}
-
-
-void back(int speed) {
-    RL_bck(speed);
-    RR_bck(speed);
-    FR_bck(speed);
-    FL_bck(speed); 
-}
-
-
-void left_turn(int speed) {
-    RL_bck(speed);
-    RR_fwd(speed);
-    FR_fwd(speed);
-    FL_bck(speed); 
-}
-
-
-void right_turn(int speed) {
-    RL_fwd(speed);
-    RR_bck(speed);
-    FR_bck(speed);
-    FL_fwd(speed); 
-}
-
-
-void left_back(int speed) {
-    RL_fwd(0);
-    RR_bck(speed);
-    FR_bck(speed);
-    FL_fwd(0); 
-}
-
-
-void right_back(int speed) {
-    RL_bck(speed);
-    RR_fwd(0);
-    FR_fwd(0);
-    FL_bck(speed); 
-}
-
-
-void clockwise(int speed) {
-    RL_fwd(speed);
-    RR_bck(speed);
-    FR_bck(speed);
-    FL_fwd(speed); 
-}
-
-
-void countclockwise(int speed) {
-    RL_bck(speed);
-    RR_fwd(speed);
-    FR_fwd(speed);
-    FL_bck(speed); 
+    rotateMotor(FRONT_RIGHT_MOTOR, STOP);
+    rotateMotor(BACK_RIGHT_MOTOR, STOP);
+    rotateMotor(FRONT_LEFT_MOTOR, STOP);
+    rotateMotor(BACK_LEFT_MOTOR, STOP);
 }
 
 // pins initialization
 void initGPIO() {
-    pinMode(RightMotorDirPin1, OUTPUT); 
-    pinMode(RightMotorDirPin2, OUTPUT); 
-    pinMode(speedPinL, OUTPUT);  
-    
-    pinMode(LeftMotorDirPin1, OUTPUT);
-    pinMode(LeftMotorDirPin2, OUTPUT); 
-    pinMode(speedPinR, OUTPUT);
-    pinMode(RightMotorDirPin1B, OUTPUT); 
-    pinMode(RightMotorDirPin2B, OUTPUT); 
-    pinMode(speedPinLB, OUTPUT);  
-    
-    pinMode(LeftMotorDirPin1B, OUTPUT);
-    pinMode(LeftMotorDirPin2B, OUTPUT); 
-    pinMode(speedPinRB, OUTPUT);
+    pinMode(26, OUTPUT);
+    pinMode(25, OUTPUT);
+    pinMode(17, OUTPUT);
+    pinMode(16, OUTPUT);
+    pinMode(27, OUTPUT);
+    pinMode(14, OUTPUT);
+    pinMode(12, OUTPUT);
+    pinMode(13, OUTPUT);
     
     stop();
 }
@@ -205,7 +150,11 @@ void initGPIO() {
 void setup() {
     initGPIO();
     Serial.begin(9600);
-    /*
+
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, pass);
+    delay(100);
+    
     Serial.print("Connecting...");
     while (WiFi.waitForConnectResult() != WL_CONNECTED) { 
         Serial.print(".");    
@@ -219,73 +168,70 @@ void setup() {
             Serial.println(buf[0]);
         });
     }
-    */
 }
 
 
 void loop() {
-    Serial.println("Unko!!!!!!"); delay(2000);
-    /*    
     switch (buf[0]) {
         case 'a':
-            forward(SPEED);
+            forward();
             break;
         case 'A':
-            forward(2*SPEED);
+            forward();
             break;
         case 'b':
-            back(speed);
-            break
+            back();
+            break;
         case 'B':
-            back(2*SPEED);
+            back();
             break;
         case 'c':
-            left_shift(0, 200, 0, 200);
+            left_forward();
             break;
         case 'C':
-            left_shift(0, 400, 0, 400);
+            left_forward();
             break;
         case 'd':
-            right_shift(200, 0, 200, 0);
+            right_forward();
             break;
         case 'D':
-            right_shift(400, 0, 400, 0);
+            right_forward();
             break;
         case 'e':
-            left_shift(200, 0, 200, 0);
+            left_back();
             break;
         case 'E':
-            left_shift(400, 0, 400, 0);
+            left_back();
             break;
         case 'f':
-            right_shift(0, 200, 0, 200);
+            right_back();
             break;
         case 'F':
-            right_shift(0, 400, 0, 400);
+            right_back();
             break;
         case 'g':
-            left_shift(200, 200, 200, 200);
+            left();
             break;
         case 'G':
-            left_shift(400, 400, 400, 400);
+            left();
             break;
         case 'h':
-            right_shift(200, 200, 200, 200);
+            right();
             break;
         case 'H':
-            right_shift(400, 400, 400, 400);
+            right();
             break;
         case 'I':
-            right_turn(TURN_SPEED);
+            right_turn();
             break;
         case 'J':
-            left_turn(TURN_SPEED);
+            left_turn();
             break;
         case 'K':
             stop();
             break;
         default:
+            stop();
             break;
     }
-    */
 }
