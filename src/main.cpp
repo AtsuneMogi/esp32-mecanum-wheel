@@ -134,15 +134,11 @@ void stop() {
 
 // pins initialization
 void initGPIO() {
-    pinMode(26, OUTPUT);
-    pinMode(25, OUTPUT);
-    pinMode(17, OUTPUT);
-    pinMode(16, OUTPUT);
-    pinMode(27, OUTPUT);
-    pinMode(14, OUTPUT);
-    pinMode(12, OUTPUT);
-    pinMode(13, OUTPUT);
-    
+    for (int i = 0; i < 4; i++) {
+        pinMode(motorPins[i].pinIN1, OUTPUT);
+        pinMode(motorPins[i].pinIN2, OUTPUT);
+    }
+
     stop();
 }
 
@@ -156,8 +152,8 @@ void setup() {
     delay(100);
     
     Serial.print("Connecting...");
-    while (WiFi.waitForConnectResult() != WL_CONNECTED) { 
-        Serial.print(".");    
+    while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+        Serial.print(".");
         delay(500);
     }
     Serial.println("");
