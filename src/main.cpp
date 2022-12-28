@@ -15,7 +15,7 @@
 
 struct MOTOR_PINS {
     int pinIN1;
-    int pinIN2;    
+    int pinIN2;
 };
 std::vector<MOTOR_PINS> motorPins = {
     {26, 25}, // Front Right Motor direction pin 1, 2 to Model-Y M_B IN1, IN2
@@ -25,22 +25,22 @@ std::vector<MOTOR_PINS> motorPins = {
 };
 // use a ring buffer to increase speed and reduce memory allocation
 char buf[1];
-char ssid[] = "M5StickC-Plus-Controller";
+char ssid[] = "M5StickC-Controller";
 char pass[] = "controller";
 AsyncUDP udp;
-unsigned int port = 8888;  // local port to listen on
+unsigned int port = 8888; // local port to listen on
 
 
 void rotateMotor(int motorNumber, int motorDirection) {
     if (motorDirection == FORWARD) {
         digitalWrite(motorPins[motorNumber].pinIN1, HIGH);
-        digitalWrite(motorPins[motorNumber].pinIN2, LOW);    
+        digitalWrite(motorPins[motorNumber].pinIN2, LOW);
     } else if (motorDirection == BACKWARD) {
         digitalWrite(motorPins[motorNumber].pinIN1, LOW);
-        digitalWrite(motorPins[motorNumber].pinIN2, HIGH);     
+        digitalWrite(motorPins[motorNumber].pinIN2, HIGH);
     } else {
         digitalWrite(motorPins[motorNumber].pinIN1, LOW);
-        digitalWrite(motorPins[motorNumber].pinIN2, LOW);       
+        digitalWrite(motorPins[motorNumber].pinIN2, LOW);
     }
 }
 
@@ -49,7 +49,7 @@ void forward() {
     rotateMotor(FRONT_RIGHT_MOTOR, FORWARD);
     rotateMotor(BACK_RIGHT_MOTOR, FORWARD);
     rotateMotor(FRONT_LEFT_MOTOR, FORWARD);
-    rotateMotor(BACK_LEFT_MOTOR, FORWARD);  
+    rotateMotor(BACK_LEFT_MOTOR, FORWARD);
 }
 
 
@@ -113,7 +113,7 @@ void right_turn() {
     rotateMotor(FRONT_RIGHT_MOTOR, BACKWARD);
     rotateMotor(BACK_RIGHT_MOTOR, BACKWARD);
     rotateMotor(FRONT_LEFT_MOTOR, FORWARD);
-    rotateMotor(BACK_LEFT_MOTOR, FORWARD);  
+    rotateMotor(BACK_LEFT_MOTOR, FORWARD);
 }
 
 
