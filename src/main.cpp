@@ -4,6 +4,13 @@
 #include <vector>
 #include <WiFi.h>
 
+#define sensorFL 39
+#define sensorFR 36
+#define sensorL 35
+#define sensorR 34
+#define sensorBL 5
+#define sensorBR 4
+
 #define FRONT_RIGHT_MOTOR 0
 #define FRONT_LEFT_MOTOR 1
 #define BACK_RIGHT_MOTOR 2
@@ -138,6 +145,12 @@ void initGPIO() {
         pinMode(motorPins[i].pinIN1, OUTPUT);
         pinMode(motorPins[i].pinIN2, OUTPUT);
     }
+    pinMode(sensorFL, INPUT);
+    pinMode(sensorFR, INPUT);
+    pinMode(sensorL, INPUT);
+    pinMode(sensorR, INPUT);
+    pinMode(sensorBL, INPUT);
+    pinMode(sensorBR, INPUT);
 
     stop();
 }
@@ -170,52 +183,116 @@ void setup() {
 void loop() {
     switch (buf[0]) {
         case 'a':
-            forward();
+            if (!digitalRead(sensorFL) + !digitalRead(sensorFR)) {
+                stop();
+            } else {
+                forward();
+            }
             break;
         case 'A':
-            forward();
+            if (!digitalRead(sensorFL) + !digitalRead(sensorFR)) {
+                stop();
+            } else {
+                forward();
+            }
             break;
         case 'b':
-            back();
+            if (!digitalRead(sensorBL) + !digitalRead(sensorBR)) {
+                stop();
+            } else {
+                back();
+            }
             break;
         case 'B':
-            back();
+            if (!digitalRead(sensorBL) + !digitalRead(sensorBR)) {
+                stop();
+            } else {
+                back();
+            }
             break;
         case 'c':
-            left_forward();
+            if (!digitalRead(sensorFL) + !digitalRead(sensorL)) {
+                stop();
+            } else {
+                left_forward();
+            }
             break;
         case 'C':
-            left_forward();
+            if (!digitalRead(sensorFL) + !digitalRead(sensorL)) {
+                stop();
+            } else {
+                left_forward();
+            }
             break;
         case 'd':
-            right_forward();
+            if (!digitalRead(sensorR) + !digitalRead(sensorFR)) {
+                stop();
+            } else {
+                right_forward();
+            }
             break;
         case 'D':
-            right_forward();
+            if (!digitalRead(sensorR) + !digitalRead(sensorFR)) {
+                stop();
+            } else {
+                right_forward();
+            }
             break;
         case 'e':
-            left_back();
+            if (!digitalRead(sensorL) + !digitalRead(sensorBL)) {
+                stop();
+            } else {
+                left_back();
+            }
             break;
         case 'E':
-            left_back();
+            if (!digitalRead(sensorL) + !digitalRead(sensorBL)) {
+                stop();
+            } else {
+                left_back();
+            }
             break;
         case 'f':
-            right_back();
+            if (!digitalRead(sensorR) + !digitalRead(sensorBR)) {
+                stop();
+            } else {
+                right_back();
+            }
             break;
         case 'F':
-            right_back();
+            if (!digitalRead(sensorR) + !digitalRead(sensorBR)) {
+                stop();
+            } else {
+                right_back();
+            }
             break;
         case 'g':
-            left();
+            if (!digitalRead(sensorFL) + !digitalRead(sensorL) + !digitalRead(sensorBL)) {
+                stop();
+            } else {
+                left();
+            }
             break;
         case 'G':
-            left();
+            if (!digitalRead(sensorFL) + !digitalRead(sensorL) + !digitalRead(sensorBL)) {
+                stop();
+            } else {
+                left();
+            }
             break;
         case 'h':
-            right();
+            if (!digitalRead(sensorFR) + !digitalRead(sensorR) + !digitalRead(sensorBR)) {
+                stop();
+            } else {
+                right();
+            }
             break;
         case 'H':
-            right();
+            if (!digitalRead(sensorFR) + !digitalRead(sensorR) + !digitalRead(sensorBR)) {
+                stop();
+            } else {
+                right();
+            }
             break;
         case 'I':
             right_turn();
@@ -231,3 +308,4 @@ void loop() {
             break;
     }
 }
+
